@@ -1,45 +1,47 @@
 name: Build Android APK
-
 on:
   push:
     branches: [ main, master ]
   workflow_dispatch:
-
 jobs:
   build:
     name: Build Release APK
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Code
+      - name: Checkout Repository
         uses: actions/checkout@v4
-
       - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
-
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           cache: true
-
-      - name: Initialize Android Platform
+      - name: Auto-Detect Project & Build APK
         run: |
+          # Find directory containing pubspec.yaml
+          if [ -f "pubspec.yaml" ]; then
+            DIR="."
+          else
+            DIR=$(find . -name "pubspec.yaml" -not -path "*/.*" -exec dirname {} \; | head -n 1)
+          fi
+          
+          echo "Found Flutter project at: $DIR"
+          cd "$DIR"
+          
+          # Initialize Android platform files & assets
           mkdir -p assets/lottie
           touch assets/lottie/.gitkeep
           flutter create . --platforms=android --org=com.example
-
-      - name: Install Dependencies
-        run: flutter pub get
-
-      - name: Build Release APK
-        run: flutter build apk --release --no-tree-shake-icons
-
-      - name: Upload Release APK
+          
+          # Get dependencies and compile release APK
+          flutter pub get
+          flutter build apk --release --no-tree-shake-icons
+      - name: Upload Installable Release APK
         uses: actions/upload-artifact@v4
         with:
           name: ExpenseFlow-Release-APK
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: '**/build/app/outputs/flutter-apk/*.apk'
