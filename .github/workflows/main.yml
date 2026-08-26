@@ -23,18 +23,20 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.x'
           channel: 'stable'
           cache: true
+
+      - name: Initialize Android Platform
+        run: |
+          mkdir -p assets/lottie
+          touch assets/lottie/.gitkeep
+          flutter create . --platforms=android --org=com.example
 
       - name: Install Dependencies
         run: flutter pub get
 
-      - name: Ensure Android Platform Files
-        run: flutter create . --platforms=android
-
       - name: Build Release APK
-        run: flutter build apk --release
+        run: flutter build apk --release --no-tree-shake-icons
 
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
